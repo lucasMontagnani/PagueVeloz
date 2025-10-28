@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Logging;
 using PagueVeloz.Application.Features.Accounts.DTOs;
 using PagueVeloz.Domain.Entities;
 using PagueVeloz.Domain.Interfaces.Repositories;
@@ -21,12 +22,13 @@ namespace PagueVeloz.Application.Features.Accounts.Commands.CreateAccount
     {
         private readonly IAccountRepository _accountRepository;
         private readonly IUnitOfWork _unitOfWork;
-        //private readonly ILogger<CreateAccountHandler> _logger;
+        private readonly ILogger<CreateAccountHandler> _logger;
 
-        public CreateAccountHandler(IAccountRepository accountRepository, IUnitOfWork unitOfWork)
+        public CreateAccountHandler(IAccountRepository accountRepository, IUnitOfWork unitOfWork, ILogger<CreateAccountHandler> logger)
         {
             _accountRepository = accountRepository;
             _unitOfWork = unitOfWork;
+            _logger = logger;
         }
 
         public async Task<AccountResponseDTO> Handle(CreateAccountCommand command, CancellationToken cancellationToken)
@@ -57,13 +59,13 @@ namespace PagueVeloz.Application.Features.Accounts.Commands.CreateAccount
                     Status = account.Status.ToString()
                 };
 
-                //_logger.LogInformation("Conta criada com sucesso: {AccountId}", account.AccountId);
+                _logger.LogInformation("Conta criada com sucesso: {AccountId}", account.AccountId);
                 return response;
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackAsync();
-                //_logger.LogError(ex, "Erro ao criar conta.");
+                _logger.LogError(ex, "Erro ao criar conta.");
                 throw new Exception("Erro ao criar conta.", ex);
             }
         }

@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Logging;
 using PagueVeloz.Application.Features.Accounts.DTOs;
 using PagueVeloz.Application.Features.Clients.DTOs;
 using PagueVeloz.Domain.Entities;
@@ -21,12 +22,13 @@ namespace PagueVeloz.Application.Features.Clients.Commands.CreateClient
     {
         private readonly IClientRepository _clientRepository;
         private readonly IUnitOfWork _unitOfWork;
-        //private readonly ILogger<CreateClientHandler> _logger;
+        private readonly ILogger<CreateClientHandler> _logger;
 
-        public CreateClientHandler(IClientRepository clientRepository, IUnitOfWork unitOfWork)
+        public CreateClientHandler(IClientRepository clientRepository, IUnitOfWork unitOfWork, ILogger<CreateClientHandler> logger)
         {
             _clientRepository = clientRepository;
             _unitOfWork = unitOfWork;
+            _logger = logger;
         }
 
         public async Task<ClientResponseDTO> Handle(CreateClientCommand request, CancellationToken cancellationToken)
@@ -51,13 +53,13 @@ namespace PagueVeloz.Application.Features.Clients.Commands.CreateClient
                     Accounts = new List<AccountSummaryDTO>()
                 };
 
-                //_logger.LogInformation("Cliente criado com sucesso: {ClientId}", client.ClientId);
+                _logger.LogInformation("Cliente criado com sucesso: {ClientId}", client.ClientId);
                 return response;
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackAsync();
-                //_logger.LogError(ex, "Erro ao criar cliente.");
+                _logger.LogError(ex, "Erro ao criar cliente.");
                 throw new Exception("Erro ao cadastrar cliente.", ex);
             }
         }

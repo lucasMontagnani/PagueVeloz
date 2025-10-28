@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Logging;
 using PagueVeloz.Domain.Entities;
 using PagueVeloz.Domain.Interfaces.Repositories;
 using System;
@@ -40,13 +41,14 @@ namespace PagueVeloz.Application.Features.Transactions.Commands.CreateTransactio
         private readonly IAccountRepository _accountRepository;
         private readonly ITransactionRepository _transactionRepository;
         private readonly IUnitOfWork _unitOfWork;
-        //private readonly ILogger<CreateTransactionHandler> _logger;
+        private readonly ILogger<CreateTransactionHandler> _logger;
 
-        public CreateTransactionHandler(IAccountRepository accountRepository, ITransactionRepository transactionRepository, IUnitOfWork unitOfWork)
+        public CreateTransactionHandler(IAccountRepository accountRepository, ITransactionRepository transactionRepository, IUnitOfWork unitOfWork, ILogger<CreateTransactionHandler> logger)
         {
             _accountRepository = accountRepository;
             _transactionRepository = transactionRepository;
             _unitOfWork = unitOfWork;
+            _logger = logger;
         }
 
         public async Task<CreateTransactionResponse> Handle(CreateTransactionCommand command, CancellationToken cancellationToken)
@@ -55,7 +57,7 @@ namespace PagueVeloz.Application.Features.Transactions.Commands.CreateTransactio
             Transaction? existing = await _transactionRepository.GetByReferenceIdAsync(command.ReferenceId);
             if (existing != null)
             {
-                //_logger.LogInformation("Transação idempotente detectada: {ReferenceId}", command.ReferenceId);
+                _logger.LogInformation("Transação idempotente detectada: {ReferenceId}", command.ReferenceId);
                 return ConvertTransactionToResponse(existing); ;
             }
 
@@ -141,17 +143,17 @@ namespace PagueVeloz.Application.Features.Transactions.Commands.CreateTransactio
 
                 await _unitOfWork.CommitAsync();
 
-                //_logger.LogInformation(
-                //    "Transação {Operation} processada com sucesso. RefId={Ref}",
-                //    command.Operation,
-                //    command.ReferenceId
-                //);
+                _logger.LogInformation(
+                    "Transação {Operation} processada com sucesso. RefId={Ref}",
+                    command.Operation,
+                    command.ReferenceId
+                );
 
                 return ConvertTransactionToResponse(transaction);
             }
             catch (Exception ex)
             {
-                //_logger.LogError(ex, "Erro ao processar transação RefId={Ref}", command.ReferenceId);
+                _logger.LogError(ex, "Erro ao processar transação RefId={Ref}", command.ReferenceId);
 
                 await _unitOfWork.RollbackAsync();
                 transaction.MarkFailed(ex.Message);
