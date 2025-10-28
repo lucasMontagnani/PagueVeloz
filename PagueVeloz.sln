@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PagueVeloz.Domain", "PagueV
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PagueVeloz.Infrastructure", "PagueVeloz.Infrastructure\PagueVeloz.Infrastructure.csproj", "{31959DA9-1309-4BB1-B451-9676EB17FE47}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PagueVeloz.Tests", "tests\PagueVeloz.Tests\PagueVeloz.Tests.csproj", "{25ECB415-C1AE-49E0-B207-E373CC740B1D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,9 +37,16 @@ Global
 		{31959DA9-1309-4BB1-B451-9676EB17FE47}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{31959DA9-1309-4BB1-B451-9676EB17FE47}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{31959DA9-1309-4BB1-B451-9676EB17FE47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{25ECB415-C1AE-49E0-B207-E373CC740B1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{25ECB415-C1AE-49E0-B207-E373CC740B1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{25ECB415-C1AE-49E0-B207-E373CC740B1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{25ECB415-C1AE-49E0-B207-E373CC740B1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{25ECB415-C1AE-49E0-B207-E373CC740B1D} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0F13F779-B2F3-4FD0-B60A-1394C7687918}

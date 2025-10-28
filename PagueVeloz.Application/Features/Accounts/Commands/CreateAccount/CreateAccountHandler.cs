@@ -31,6 +31,10 @@ namespace PagueVeloz.Application.Features.Accounts.Commands.CreateAccount
 
         public async Task<AccountResponseDTO> Handle(CreateAccountCommand command, CancellationToken cancellationToken)
         {
+            // TODO: Substituir por validações mais robustas, possivelmente usando FluentValidation
+            if (command.InitialBalance < 0) throw new ArgumentException("O saldo inicial não pode ser negativo.");
+            if (command.CreditLimit < 0) throw new ArgumentException("O limite de crédito não pode ser negativo.");
+
             Account account = new(
                 command.ClientId,
                 command.InitialBalance,
