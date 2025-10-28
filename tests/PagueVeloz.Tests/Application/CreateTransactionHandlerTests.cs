@@ -7,6 +7,7 @@ using PagueVeloz.Domain.Interfaces.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -180,10 +181,13 @@ namespace PagueVeloz.Tests.Application
         [Fact(DisplayName = "Deve retornar transação existente quando ReferenceId já existir")]
         public async Task Handle_ShouldReturnExistingTransaction_WhenReferenceAlreadyExists()
         {
-            Transaction existing = new(_referenceId, _accountId, TransactionOperation.Credit, 100, "BRL", null);
-            _transactionRepositoryMock.Setup(r => r.GetByReferenceIdAsync(_referenceId)).ReturnsAsync(existing);
+            Account account = new Account(Guid.NewGuid(), 1000, 500);
+            Transaction existing = new(_referenceId, account.AccountId, TransactionOperation.Credit, 100, "BRL", null);
 
-            CreateTransactionCommand command = new("credit", _accountId, 100, "BRL", _referenceId);
+            _transactionRepositoryMock.Setup(r => r.GetByReferenceIdAsync(_referenceId)).ReturnsAsync(existing);
+            _accountRepositoryMock.Setup(r => r.GetByIdAsync(account.AccountId)).ReturnsAsync(account);
+
+            CreateTransactionCommand command = new("credit", account.AccountId, 100, "BRL", _referenceId);
 
             CreateTransactionResponse result = await _handler.Handle(command, CancellationToken.None);
 

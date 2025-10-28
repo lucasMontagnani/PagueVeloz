@@ -19,7 +19,7 @@ namespace PagueVeloz.Application.Features.Transactions.Commands.CreateTransactio
         double Amount,
         string Currency,
         Guid ReferenceId,
-        string? Metadata = null,
+        Metadata? Metadata = null,
         Guid? DestinationAccountId = null
     ) : IRequest<CreateTransactionResponse>;
 
@@ -27,14 +27,19 @@ namespace PagueVeloz.Application.Features.Transactions.Commands.CreateTransactio
     (
         Guid TransactionId,
         string Status,
-        string Operation,
-        Guid AccountId,
-        double Amount,
-        string Currency,
+        Guid AccountId,        
+        double Balance,
+        double ReservedBalance,
+        double AvailableBalance,
         DateTime Timestamp,
-        string? ErrorMessage,
-        Guid? DestinationAccountId
+        string? ErrorMessage
+        //string Operation,
+        //double Amount,
+        //string Currency,
+        //Guid? DestinationAccountId
     );
+
+    public record Metadata(string? Description);
 
     public class CreateTransactionHandler : IRequestHandler<CreateTransactionCommand, CreateTransactionResponse>
     {
@@ -58,7 +63,9 @@ namespace PagueVeloz.Application.Features.Transactions.Commands.CreateTransactio
             if (existing != null)
             {
                 _logger.LogInformation("Transação idempotente detectada: {ReferenceId}", command.ReferenceId);
-                return ConvertTransactionToResponse(existing); ;
+                Account? account = await _accountRepository.GetByIdAsync(existing.AccountId)
+                                 ?? throw new KeyNotFoundException($"Conta {existing.AccountId} não encontrada.");
+                return ConvertTransactionToResponse(existing, account);
             }
 
             // 2 - Cria o registro base
@@ -68,19 +75,19 @@ namespace PagueVeloz.Application.Features.Transactions.Commands.CreateTransactio
                 Enum.Parse<TransactionOperation>(command.Operation, true),
                 command.Amount,
                 command.Currency,
-                command.Metadata
+                command.Metadata?.Description
             );
 
             await _transactionRepository.AddAsync(transaction);
 
             await _unitOfWork.BeginTransactionAsync();
 
+            // 3 - Obtém conta(s) com bloqueio pessimista
+            Account? sourceAccount = await _accountRepository.GetForUpdateAsync(command.AccountId)
+                                   ?? throw new InvalidOperationException($"Conta {command.AccountId} não encontrada.");
+
             try
             {
-                // 3 - Obtém conta(s) com bloqueio pessimista
-                Account? sourceAccount = await _accountRepository.GetForUpdateAsync(command.AccountId) 
-                                       ?? throw new InvalidOperationException($"Conta {command.AccountId} não encontrada.");
-
                 Account? destinationAccount = null;
                 if (command.DestinationAccountId is not null)
                 {
@@ -149,7 +156,7 @@ namespace PagueVeloz.Application.Features.Transactions.Commands.CreateTransactio
                     command.ReferenceId
                 );
 
-                return ConvertTransactionToResponse(transaction);
+                return ConvertTransactionToResponse(transaction, sourceAccount);
             }
             catch (Exception ex)
             {
@@ -158,22 +165,25 @@ namespace PagueVeloz.Application.Features.Transactions.Commands.CreateTransactio
                 await _unitOfWork.RollbackAsync();
                 transaction.MarkFailed(ex.Message);
                 await _transactionRepository.UpdateAsync(transaction);
-                return ConvertTransactionToResponse(transaction);
+                return ConvertTransactionToResponse(transaction, sourceAccount);
             }
         }
 
-        public static CreateTransactionResponse ConvertTransactionToResponse(Transaction transaction)
+        public static CreateTransactionResponse ConvertTransactionToResponse(Transaction transaction, Account account)
         {
             return new CreateTransactionResponse(
                 transaction.TransactionId,
                 transaction.Status.ToString(),
-                transaction.Operation.ToString(),
                 transaction.AccountId,
-                transaction.Amount,
-                transaction.Currency,
+                account.AvailableBalance,
+                account.ReservedBalance,
+                account.AvailableBalance + account.CreditLimit,
                 transaction.Timestamp,
-                transaction.ErrorMessage,
-                transaction.DestinationAccountId
+                transaction.ErrorMessage
+                //transaction.Operation.ToString(),
+                //transaction.Amount,
+                //transaction.Currency,
+                //transaction.DestinationAccountId
             );
         }
     }
