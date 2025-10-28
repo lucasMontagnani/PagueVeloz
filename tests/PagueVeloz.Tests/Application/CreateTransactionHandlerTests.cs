@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using PagueVeloz.Application.Features.Transactions.Commands.CreateTransaction;
 using PagueVeloz.Domain.Entities;
@@ -16,6 +17,7 @@ namespace PagueVeloz.Tests.Application
         private readonly Mock<IAccountRepository> _accountRepositoryMock;
         private readonly Mock<ITransactionRepository> _transactionRepositoryMock;
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+        private readonly Mock<ILogger<CreateTransactionHandler>> _loggerMock;
         private readonly CreateTransactionHandler _handler;
 
         private readonly Guid _accountId = Guid.NewGuid();
@@ -27,11 +29,13 @@ namespace PagueVeloz.Tests.Application
             _accountRepositoryMock = new Mock<IAccountRepository>();
             _transactionRepositoryMock = new Mock<ITransactionRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
+            _loggerMock = new Mock<ILogger<CreateTransactionHandler>>();
 
             _handler = new CreateTransactionHandler(
                 _accountRepositoryMock.Object,
                 _transactionRepositoryMock.Object,
-                _unitOfWorkMock.Object
+                _unitOfWorkMock.Object,
+                _loggerMock.Object
             );
         }
 

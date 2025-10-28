@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using PagueVeloz.Application.Features.Accounts.Commands.CreateAccount;
 using PagueVeloz.Application.Features.Accounts.DTOs;
@@ -16,16 +17,19 @@ namespace PagueVeloz.Tests.Application
     {
         private readonly Mock<IAccountRepository> _accountRepositoryMock;
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+        private readonly Mock<ILogger<CreateAccountHandler>> _loggerMock;
         private readonly CreateAccountHandler _handler;
 
         public CreateAccountHandlerTests()
         {
             _accountRepositoryMock = new Mock<IAccountRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
+            _loggerMock = new Mock<ILogger<CreateAccountHandler>>();
 
             _handler = new CreateAccountHandler(
                 _accountRepositoryMock.Object,
-                _unitOfWorkMock.Object
+                _unitOfWorkMock.Object,
+                _loggerMock.Object
             );
         }
 

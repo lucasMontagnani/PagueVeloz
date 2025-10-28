@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿using Castle.Core.Logging;
+using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using PagueVeloz.Application.Features.Clients.Commands.CreateClient;
 using PagueVeloz.Application.Features.Clients.DTOs;
@@ -17,15 +19,18 @@ namespace PagueVeloz.Tests.Application
         private readonly Mock<IClientRepository> _clientRepositoryMock;
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly CreateClientHandler _handler;
+        private readonly Mock<ILogger<CreateClientHandler>> _loggerMock;
 
         public CreateClientHandlerTests()
         {
             _clientRepositoryMock = new Mock<IClientRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
+            _loggerMock = new Mock<ILogger<CreateClientHandler>>();
 
             _handler = new CreateClientHandler(
                 _clientRepositoryMock.Object,
-                _unitOfWorkMock.Object
+                _unitOfWorkMock.Object,
+                _loggerMock.Object
             );
         }
 
