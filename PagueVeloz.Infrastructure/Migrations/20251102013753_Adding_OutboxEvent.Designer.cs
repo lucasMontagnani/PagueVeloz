@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PagueVeloz.Infrastructure.Persistence.Context;
@@ -11,9 +12,11 @@ using PagueVeloz.Infrastructure.Persistence.Context;
 namespace PagueVeloz.Infrastructure.Migrations
 {
     [DbContext(typeof(PagueVelozDbContext))]
-    partial class PagueVelozDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251102013753_Adding_OutboxEvent")]
+    partial class Adding_OutboxEvent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

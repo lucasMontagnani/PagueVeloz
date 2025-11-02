@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PagueVeloz.Domain.Interfaces.Repositories;
 using PagueVeloz.Infrastructure.Persistence.Context;
 using PagueVeloz.Infrastructure.Repositories;
+using PagueVeloz.Infrastructure.Resiliences;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +30,10 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
+builder.Services.AddScoped<IOutboxRepository, OutboxRepository>();
+
+builder.Services.AddHostedService<OutboxProcessor>();
+
 
 
 var myHandlers = AppDomain.CurrentDomain.Load("PagueVeloz.Application");

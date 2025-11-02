@@ -23,7 +23,7 @@ namespace PagueVeloz.Infrastructure.Repositories
         {
             _context = context;
             _logger = logger;
-            _retryPolicy = RetryPolicyFactory.CreateDatabaseRetryPolicy(_logger);
+            _retryPolicy = RetryPolicyFactory.ApplyRetryPolicy(_logger);
         }
 
         public async Task BeginTransactionAsync()

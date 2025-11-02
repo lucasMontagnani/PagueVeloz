@@ -13,7 +13,7 @@ namespace PagueVeloz.Infrastructure.Resiliences
 {
     public static class RetryPolicyFactory
     {
-        public static AsyncRetryPolicy CreateDatabaseRetryPolicy<TLogger>(ILogger<TLogger> logger)
+        public static AsyncRetryPolicy ApplyRetryPolicy<TLogger>(ILogger<TLogger> logger)
         {
             return Policy
                 // Captura exceções comuns em bancos relacionais

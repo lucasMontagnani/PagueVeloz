@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Transactions;
 using Transaction = PagueVeloz.Domain.Entities.Transaction;
@@ -45,13 +46,15 @@ namespace PagueVeloz.Application.Features.Transactions.Commands.CreateTransactio
     {
         private readonly IAccountRepository _accountRepository;
         private readonly ITransactionRepository _transactionRepository;
+        private readonly IOutboxRepository _outboxRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<CreateTransactionHandler> _logger;
 
-        public CreateTransactionHandler(IAccountRepository accountRepository, ITransactionRepository transactionRepository, IUnitOfWork unitOfWork, ILogger<CreateTransactionHandler> logger)
+        public CreateTransactionHandler(IAccountRepository accountRepository, ITransactionRepository transactionRepository, IOutboxRepository outboxRepository, IUnitOfWork unitOfWork, ILogger<CreateTransactionHandler> logger)
         {
             _accountRepository = accountRepository;
             _transactionRepository = transactionRepository;
+            _outboxRepository = outboxRepository;
             _unitOfWork = unitOfWork;
             _logger = logger;
         }
@@ -147,6 +150,13 @@ namespace PagueVeloz.Application.Features.Transactions.Commands.CreateTransactio
                     SourceAccount = sourceAccount.AccountId,
                     DestinationAccount = destinationAccount?.AccountId
                 };
+
+                OutboxEvent outboxEvent = new(
+                    type: "TransactionCreated",
+                    payload: JsonSerializer.Serialize(evtPayload)
+                );
+
+                await _outboxRepository.AddAsync(outboxEvent);
 
                 await _unitOfWork.CommitAsync();
 

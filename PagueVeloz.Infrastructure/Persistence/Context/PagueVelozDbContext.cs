@@ -18,12 +18,14 @@ namespace PagueVeloz.Infrastructure.Persistence.Context
         public DbSet<Client> Clients => Set<Client>();
         public DbSet<Account> Accounts => Set<Account>();
         public DbSet<Transaction> Transactions => Set<Transaction>();
+        public DbSet<OutboxEvent> OutboxEvents => Set<OutboxEvent>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new ClientConfiguration());
             modelBuilder.ApplyConfiguration(new AccountConfiguration());
             modelBuilder.ApplyConfiguration(new TransactionConfiguration());
+            modelBuilder.ApplyConfiguration(new OutboxEventConfiguration());
         }
     }
 }

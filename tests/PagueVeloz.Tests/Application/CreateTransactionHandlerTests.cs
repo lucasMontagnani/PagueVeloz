@@ -18,6 +18,7 @@ namespace PagueVeloz.Tests.Application
         private readonly Mock<IAccountRepository> _accountRepositoryMock;
         private readonly Mock<ITransactionRepository> _transactionRepositoryMock;
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+        private readonly Mock<IOutboxRepository> _outboxRepositoryMock;
         private readonly Mock<ILogger<CreateTransactionHandler>> _loggerMock;
         private readonly CreateTransactionHandler _handler;
 
@@ -31,10 +32,12 @@ namespace PagueVeloz.Tests.Application
             _transactionRepositoryMock = new Mock<ITransactionRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _loggerMock = new Mock<ILogger<CreateTransactionHandler>>();
+            _outboxRepositoryMock = new Mock<IOutboxRepository>();
 
             _handler = new CreateTransactionHandler(
                 _accountRepositoryMock.Object,
                 _transactionRepositoryMock.Object,
+                _outboxRepositoryMock.Object,
                 _unitOfWorkMock.Object,
                 _loggerMock.Object
             );
