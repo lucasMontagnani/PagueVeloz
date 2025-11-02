@@ -4,6 +4,7 @@ using PagueVeloz.Domain.Interfaces.Repositories;
 using PagueVeloz.Infrastructure.Persistence.Context;
 using PagueVeloz.Infrastructure.Repositories;
 using PagueVeloz.Infrastructure.Resiliences;
+using Serilog;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,6 +42,17 @@ builder.Services.AddMediatR(cfg =>
 {
     //cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
     cfg.RegisterServicesFromAssemblies(myHandlers);
+});
+
+// Configurando Serilog
+builder.Host.UseSerilog((context, configuration) =>
+{
+    configuration
+        .Enrich.FromLogContext()
+        .WriteTo.Console(
+            outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"
+        )
+        .WriteTo.File("logs/pagueveloz-.log", rollingInterval: RollingInterval.Day);
 });
 
 var app = builder.Build();
