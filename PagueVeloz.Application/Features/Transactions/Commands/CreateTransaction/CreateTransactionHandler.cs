@@ -2,8 +2,10 @@
 using Microsoft.Extensions.Logging;
 using PagueVeloz.Domain.Entities;
 using PagueVeloz.Domain.Interfaces.Repositories;
+using Prometheus;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -59,8 +61,24 @@ namespace PagueVeloz.Application.Features.Transactions.Commands.CreateTransactio
             _logger = logger;
         }
 
+        public static readonly Histogram TransactionDurationSeconds = Metrics.CreateHistogram
+        (
+            "transaction_duration_seconds",
+            "Duração das transações em segundos",
+            new[] { "operation" }
+        );
+
         public async Task<CreateTransactionResponse> Handle(CreateTransactionCommand command, CancellationToken cancellationToken)
         {
+            // 0 - Métrica de duração (Histograma)
+            using var timer = TransactionDurationSeconds.WithLabels(command.Operation.ToLower()).NewTimer();
+
+            Activity? activity = Activity.Current;
+            var source = new ActivitySource("PagueVeloz.Application");
+            using var handlerActivity = source.StartActivity("ProcessTransaction", ActivityKind.Internal);
+            handlerActivity?.SetTag("operation", command.Operation);
+            handlerActivity?.SetTag("reference_id", command.ReferenceId);
+
             // 1 - Idempotência — verifica se já existe uma transação com o mesmo ReferenceId
             Transaction? existing = await _transactionRepository.GetByReferenceIdAsync(command.ReferenceId);
             if (existing != null)

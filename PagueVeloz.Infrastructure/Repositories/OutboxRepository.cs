@@ -24,10 +24,16 @@ namespace PagueVeloz.Infrastructure.Repositories
             await _context.OutboxEvents.AddAsync(evt);
         }
 
-        public async Task<IEnumerable<OutboxEvent>> GetPendingAsync(int batchSize = 50)
+        public async Task UpdateAsync(OutboxEvent outboxEvent)
+        {
+            _context.OutboxEvents.Update(outboxEvent);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<OutboxEvent>> GetPendingEventsAsync(int batchSize = 50)
         {
             return await _context.OutboxEvents
-                .Where(e => e.ProcessedAt != null)
+                .Where(e => e.ProcessedAt == null)
                 .OrderBy(e => e.CreatedAt)
                 .Take(batchSize)
                 .ToListAsync();

@@ -7,6 +7,7 @@ using PagueVeloz.Infrastructure.Persistence.Context;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
+using Prometheus;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,20 +31,29 @@ namespace PagueVeloz.Infrastructure.Resiliences
             _circuitBreakerPolicy = CircuitBreakerPolicyFactory.ApplyCircuitBreakerPolicy(_logger);
         }
 
+        private static readonly Gauge OutboxPendingGauge =
+            Metrics.CreateGauge("outbox_events_pending", "Eventos pendentes no Outbox");
+
+        private static readonly Counter OutboxPublishedCounter =
+            Metrics.CreateCounter("outbox_events_published_total", "Eventos publicados com sucesso");
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
                 using var scope = _scopeFactory.CreateScope();
-                var context = scope.ServiceProvider.GetRequiredService<PagueVelozDbContext>();
+                PagueVelozDbContext context = scope.ServiceProvider.GetRequiredService<PagueVelozDbContext>();
 
-                var pendingEvents = await context.OutboxEvents
-                .Where(e => e.ProcessedAt == null)
-                .OrderBy(e => e.CreatedAt)
-                .Take(20)
-                .ToListAsync(stoppingToken);
+                int pending = await context.OutboxEvents.CountAsync(e => e.ProcessedAt == null);
+                OutboxPendingGauge.Set(pending);
 
-                foreach (var evt in pendingEvents)
+                List<OutboxEvent> pendingEvents = await context.OutboxEvents
+                                                                .Where(e => e.ProcessedAt == null)
+                                                                .OrderBy(e => e.CreatedAt)
+                                                                .Take(20)
+                                                                .ToListAsync(stoppingToken);
+
+                foreach (OutboxEvent evt in pendingEvents)
                 {
                     try
                     {
@@ -56,6 +66,7 @@ namespace PagueVeloz.Infrastructure.Resiliences
 
                             _logger.LogInformation("Publicando evento {Type} => {Payload}", evt.Type, evt.Payload);
                             evt.MarkProcessed();
+                            OutboxPublishedCounter.Inc();
                         });
                     }
                     catch (BrokenCircuitException)

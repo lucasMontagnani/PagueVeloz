@@ -1,9 +1,13 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using PagueVeloz.Application.Common.Behaviours;
 using PagueVeloz.Domain.Interfaces.Repositories;
 using PagueVeloz.Infrastructure.Persistence.Context;
 using PagueVeloz.Infrastructure.Repositories;
 using PagueVeloz.Infrastructure.Resiliences;
+using Prometheus;
 using Serilog;
 using System.Reflection;
 
@@ -25,6 +29,13 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 builder.Logging.AddEventSourceLogger();
+// Assim, cada log que for gerado dentro do Activity carrega o mesmo contexto distribuído, e ferramentas como Grafana Loki ou Seq podem correlacionar logs, traces e métricas.
+builder.Logging.Configure(options =>
+{
+    options.ActivityTrackingOptions = ActivityTrackingOptions.SpanId
+        | ActivityTrackingOptions.TraceId
+        | ActivityTrackingOptions.ParentId;
+});
 
 // Registrando dependências
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -35,7 +46,7 @@ builder.Services.AddScoped<IOutboxRepository, OutboxRepository>();
 
 builder.Services.AddHostedService<OutboxProcessor>();
 
-
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(MetricsBehavior<,>));
 
 var myHandlers = AppDomain.CurrentDomain.Load("PagueVeloz.Application");
 builder.Services.AddMediatR(cfg =>
@@ -55,6 +66,24 @@ builder.Host.UseSerilog((context, configuration) =>
         .WriteTo.File("logs/pagueveloz-.log", rollingInterval: RollingInterval.Day);
 });
 
+// Configurando OpenTelemetry Tracing
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
+    {
+        tracerProviderBuilder
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddSource("PagueVeloz.Application")
+            .AddConsoleExporter() // ou .AddZipkinExporter(o => o.Endpoint = new Uri("http://localhost:9411/api/v2/spans"))
+            .SetResourceBuilder(
+                OpenTelemetry.Resources.ResourceBuilder.CreateDefault().AddService("PagueVeloz.API")
+            );
+    });
+
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection"));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -70,5 +99,11 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health");
+
+// Prometheus metrics
+app.UseHttpMetrics(); // Coleta métricas HTTP automaticamente
+app.MapMetrics();     // rota padrão: /metrics
 
 app.Run();

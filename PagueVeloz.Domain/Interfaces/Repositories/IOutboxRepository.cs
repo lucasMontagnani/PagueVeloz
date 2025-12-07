@@ -10,6 +10,7 @@ namespace PagueVeloz.Domain.Interfaces.Repositories
     public interface IOutboxRepository
     {
         Task AddAsync(OutboxEvent evt);
-        Task<IEnumerable<OutboxEvent>> GetPendingAsync(int batchSize = 50);
+        Task UpdateAsync(OutboxEvent outboxEvent);
+        Task<IEnumerable<OutboxEvent>> GetPendingEventsAsync(int batchSize = 50);
     }
 }
