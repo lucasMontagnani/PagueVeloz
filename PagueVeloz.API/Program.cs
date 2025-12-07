@@ -44,7 +44,7 @@ builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<IOutboxRepository, OutboxRepository>();
 
-builder.Services.AddHostedService<OutboxProcessor>();
+//builder.Services.AddHostedService<OutboxProcessor>();
 
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(MetricsBehavior<,>));
 
@@ -99,6 +99,12 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    PagueVelozDbContext db = scope.ServiceProvider.GetRequiredService<PagueVelozDbContext>();
+    db.Database.Migrate(); // Aplica automaticamente as migrations
+}
 
 app.MapHealthChecks("/health");
 

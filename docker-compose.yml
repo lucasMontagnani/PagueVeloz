@@ -1,0 +1,12 @@
+services:
+  pagueveloz.api:
+    image: ${DOCKER_REGISTRY-}paguevelozapi
+    build:
+      context: .
+      dockerfile: PagueVeloz.API/Dockerfile
+
+  paguevelozdb:
+    image: postgres
+
+volumes:
+  pagueveloz_postgres_data:    
