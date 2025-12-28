@@ -113,3 +113,5 @@ app.UseHttpMetrics(); // Coleta métricas HTTP automaticamente
 app.MapMetrics();     // rota padrão: /metrics
 
 app.Run();
+
+public partial class Program { } // Para permitir testes de integração
