@@ -20,7 +20,7 @@ namespace PagueVeloz.Integration.Tests
         public async Task CreateClient_ShouldAdd_WhenCommandIsValid()
         {
             // Arrange
-            CreateClientCommand command = new("Lucas Client", "lucas.client@test.com");
+            CreateClientCommand command = new("Lucas Client", "lucas.client@test.com", "Senha@123");
 
             // Act
             ClientResponseDTO createdClient = await Sender.Send(command);
@@ -35,7 +35,7 @@ namespace PagueVeloz.Integration.Tests
         public async Task GetClientById_ShouldReturnClient_WhenClientExists()
         {
             // Arrange
-            CreateClientCommand command = new("Lucas Client 2", "lucas.client2@test.com");
+            CreateClientCommand command = new("Lucas Client 2", "lucas.client2@test.com", "Senha@123");
             ClientResponseDTO createdClient = await Sender.Send(command);
             GetClientByIdQuery query = new(createdClient.ClientId);
 

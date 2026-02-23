@@ -1,15 +1,23 @@
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using PagueVeloz.API.Extensions;
 using PagueVeloz.Application.Common.Behaviours;
 using PagueVeloz.Domain.Interfaces.Repositories;
+using PagueVeloz.Domain.Interfaces.Repositories.Generics;
+using PagueVeloz.Domain.Interfaces.Services;
 using PagueVeloz.Infrastructure.Persistence.Context;
 using PagueVeloz.Infrastructure.Repositories;
+using PagueVeloz.Infrastructure.Repositories.Generics;
 using PagueVeloz.Infrastructure.Resiliences;
+using PagueVeloz.Infrastructure.Services;
 using Prometheus;
 using Serilog;
 using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +27,7 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGenWithAuth();
 
 builder.Services.AddDbContext<PagueVelozDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -39,10 +47,13 @@ builder.Logging.Configure(options =>
 
 // Registrando dependências
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepository<>));
+builder.Services.AddScoped(typeof(IQueryRepository<>), typeof(QueryRepository<>));
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<IOutboxRepository, OutboxRepository>();
+builder.Services.AddSingleton<ITokenService, TokenService>();
 
 //builder.Services.AddHostedService<OutboxProcessor>();
 
@@ -82,7 +93,30 @@ builder.Services.AddOpenTelemetry()
     });
 
 builder.Services.AddHealthChecks()
-    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!);
+
+// Adicionando Autenticação e Autorização
+builder.Services.AddAuthorization();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(o =>
+    {
+        o.RequireHttpsMetadata = false;
+        o.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
+
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)
+            ),
+
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ClockSkew = TimeSpan.Zero
+        };
+    });
 
 var app = builder.Build();
 
@@ -96,6 +130,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

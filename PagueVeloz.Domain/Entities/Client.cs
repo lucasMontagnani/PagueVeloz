@@ -12,6 +12,7 @@ namespace PagueVeloz.Domain.Entities
         public Guid ClientId { get; private set; } = Guid.NewGuid();
         public string Name { get; private set; } = null!;
         public string Email { get; private set; } = null!;
+        public string Senha { get; private set; } = null!;
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 
         [JsonIgnore]
@@ -19,10 +20,11 @@ namespace PagueVeloz.Domain.Entities
 
         protected Client() { }
 
-        public Client(string name, string email)
+        public Client(string name, string email, string senha)
         {
             Name = name;
             Email = email;
+            Senha = senha;
         }
     }
 }

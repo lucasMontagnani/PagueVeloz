@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using PagueVeloz.Application.Common.Helpers;
 using PagueVeloz.Application.Features.Accounts.DTOs;
 using PagueVeloz.Application.Features.Clients.DTOs;
 using PagueVeloz.Domain.Entities;
@@ -15,7 +16,8 @@ namespace PagueVeloz.Application.Features.Clients.Commands.CreateClient
     public record CreateClientCommand
     (
         string Name,
-        string Email
+        string Email,
+        string Senha
     ) : IRequest<ClientResponseDTO>;
 
     public class CreateClientHandler : IRequestHandler<CreateClientCommand, ClientResponseDTO>
@@ -31,12 +33,12 @@ namespace PagueVeloz.Application.Features.Clients.Commands.CreateClient
             _logger = logger;
         }
 
-        public async Task<ClientResponseDTO> Handle(CreateClientCommand request, CancellationToken cancellationToken)
+        public async Task<ClientResponseDTO> Handle(CreateClientCommand command, CancellationToken cancellationToken)
         {
-            if (await _clientRepository.ExistsByEmailAsync(request.Email))
+            if (await _clientRepository.ExistsByEmailAsync(command.Email))
                 throw new Exception("Já existe um cliente com o email fornecido.");
 
-            Client client = new(request.Name, request.Email);
+            Client client = new(command.Name, command.Email, UtilsHelper.EncryptPassword(command.Senha));
 
             try
             {

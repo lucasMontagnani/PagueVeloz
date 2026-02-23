@@ -38,7 +38,7 @@ namespace PagueVeloz.Tests.Application
         public async Task Handle_ShouldCreateClient_WhenEmailIsUnique()
         {
             // Arrange
-            CreateClientCommand command = new("Nome Usuário Teste", "usuario.teste@gmail.com");
+            CreateClientCommand command = new("Nome Usuário Teste", "usuario.teste@gmail.com", "Senha@123");
 
             _clientRepositoryMock
                 .Setup(r => r.ExistsByEmailAsync(command.Email))
@@ -61,7 +61,7 @@ namespace PagueVeloz.Tests.Application
         public async Task Handle_ShouldThrowException_WhenEmailAlreadyExists()
         {
             // Arrange
-            CreateClientCommand command = new("Nome Usuário Teste", "usuario.teste@gmail.com");
+            CreateClientCommand command = new("Nome Usuário Teste", "usuario.teste@gmail.com", "Senha@123");
 
             _clientRepositoryMock
                 .Setup(r => r.ExistsByEmailAsync(command.Email))
@@ -82,7 +82,7 @@ namespace PagueVeloz.Tests.Application
         public async Task Handle_ShouldRollback_WhenUnexpectedErrorOccurs()
         {
             // Arrange
-            CreateClientCommand command = new("Nome Usuário Teste", "usuario.teste@gmail.com");
+            CreateClientCommand command = new("Nome Usuário Teste", "usuario.teste@gmail.com", "Senha@123");
 
             _clientRepositoryMock
                 .Setup(r => r.ExistsByEmailAsync(command.Email))
